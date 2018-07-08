@@ -1,4 +1,5 @@
 
+
 var canvas1 = document.getElementById("canvas").getContext("2d");
 
 var catcherOne = new Image();
@@ -33,7 +34,7 @@ var food = new Image();
   var foodObject = {
     'width' : 50,
     'height': 50,
-    'speed':3
+    'spd':3
   }
 
   var catcherObject = {
@@ -89,6 +90,24 @@ background.onload = function() {
                   }
                 }
 
+                food_catcher_collision = function(f) {
+                    return((f.x < catcherObject.x + catcherObject.width)
+                            && (catcherObject.x < f.x +foodObject.width)
+                            && (f.y < catcherObject.y + catcherObject.height)
+                          &&(catcherObject.y < f.y + foodObject.height));
+                }
+                food_tile_collision = function(f,t) {
+                    return((f.x < t.x + tileObject.width)
+                            && (t.x < f.x +foodObject.width)
+                            && (f.y < t.y + tileObject.height)
+                          &&(t.y < f.y + foodObject.height));
+                }
+
+                catcher_tile_collision = function(t) {
+                    return((f.x <= t.x + tileObject.width)
+                          && (t.x <= catcherObject.x + catcherObject.width)
+                          &&(catcherObject.y + catcherObject.height <= t.y));
+                }
 
                 jump = function() {
                   // condition to move catcher object up
@@ -103,6 +122,18 @@ background.onload = function() {
                   }
                 }
 
+                updateFoodPosition = function() {
+                  for(var i in foodList) {
+                    if (foodList[i].y > 500) {
+                      foodList.splice(i,1);
+                    } else {
+                      foodList[i].y += foodObject.spd;
+                    }
+                  }
+                }
+
+
+
                 updateCatcherPosition = function(){
                   if(catcherObject.leftPressed && catcherObject.x > 0) {
                     catcherObject.x += catcherObject.spd;
@@ -115,26 +146,51 @@ background.onload = function() {
                   }
                 }
 
+
                 updatePosition = function() {
                   canvas1.clearRect(0,0,500,500);
-                  drawObject(background,0,0,500,500);
-
+                  canvas1.drawImage(background,0,0,500,500);
+                  // food object pushed to foodList array
+                  foodTimer++;
+                  if(foodTimer > 100) {
+                    foodList.push({'x':foodDrop[Math.round(Math.random()*9)],'y':0});
+                    foodTimer = 0;
+                  }
                   if(catcherObject.onair){
                     drawObject(catcherFour,catcherObject.x,catcherObject.y,catcherObject.width,catcherObject.height);
                   }
 
                   // blinking eyes animation
                   else if (animation == 0) {
-                    drawObject(catcherTwo,catcherObject.x,catcherObject.y,catcherObject.width,catcherObject.height);
-                    animation = 1;
-                  } else {
                     drawObject(catcherOne,catcherObject.x,catcherObject.y,catcherObject.width,catcherObject.height);
+                    animation = 1;
+                  } else if (animation ==1){
+                    drawObject(catcherTwo,catcherObject.x,catcherObject.y,catcherObject.width,catcherObject.height);
                     animation = 0;
                   }
+                  for (var i in foodList) {
+                    drawObject(food,foodList[i].x,foodList[i].y,foodObject.width,foodObject.height);
+                  }
+
                   for (var i=0;i<tileList.length;i++) {
                     drawObject(tile,tileList[i].x,tileList[i].y,tileObject.width,tileObject.height);
                   }
 
+                  for (var i in foodList) {
+                    for (var j in tileList) {
+                      if(food_tile_collision(foodList[i],tileList[j])){
+                        tileList.splice(j,1);
+                        }
+                      }
+                  }
+
+                  for (var i in foodList) {
+                    if(food_catcher_collision(foodList[i])){
+                      score++;
+                      foodList.splice(i,1);
+                    }
+                  }
+                  updateFoodPosition();
                   updateCatcherPosition();
                   jump();
                 }
